@@ -8,25 +8,28 @@ namespace Gear.UrlFinder {
 	public static class UrlFinder {
 		public struct Result {
 			public string Searched;
+			public string Value;
+
 			public int Start, End;
 			public int Count  { get { return End-Start; }}
 			public int Length { get { return End-Start; }}
-			public string Value { get { return Searched.Substring(Start,Count); }}
 		}
 
 		static readonly string[] KnownNestedHosts = new[]
 			{ "web.archive.org"
 			};
 
-		static readonly string[] KnownProtocols = new[]
-			{ "http://"
-			, "https://"
-			, "file://"
-			, "ftp://"
-			, "irc://"
-			, "ircs://"
-			, "svn://"
-			, "svn+ssh://"
+		static readonly Dictionary<string,string> KnownProtocols = new Dictionary<string,string>( )
+			{ { "http://",		null }
+			, { "https://",		null }
+			, { "ttp://",		"http://"	}
+			, { "ttps://",		"https://"	}
+			, { "file://",		null }
+			, { "ftp://",		null }
+			, { "irc://",		null }
+			, { "ircs://",		null }
+			, { "svn://",		null }
+			, { "svn+ssh://",	null }
 			}; // TODO: Steal 'known' protocols from the windows registry? Also http://en.wikipedia.org/wiki/URI_scheme
 
 		static readonly string[] KnownTLDs = new[]
@@ -42,9 +45,14 @@ namespace Gear.UrlFinder {
 			};
 
 		static UrlFinder() {
-			Debug.Assert( KnownProtocols.All( p => p.EndsWith  ("://") ) );
-			Debug.Assert( KnownTLDs     .All( p => p.StartsWith( "." ) ) );
-			Debug.Assert( KnownBLDs.Keys.All( p => p.EndsWith  ( "." ) ) );
+			foreach( var kv in KnownProtocols )
+				if( kv.Value == null )
+					KnownProtocols[ kv.Key ] = kv.Key;
+
+			Debug.Assert( KnownProtocols.Keys  .All( p => p.EndsWith  ("://") ) );
+			Debug.Assert( KnownProtocols.Values.All( p => p.EndsWith  ("://") ) );
+			Debug.Assert( KnownTLDs            .All( p => p.StartsWith( "." ) ) );
+			Debug.Assert( KnownBLDs.Keys       .All( p => p.EndsWith  ( "." ) ) );
 		}
 
 		static IEnumerable<int> IndiciesOf( string input, string substring ) {
@@ -82,9 +90,11 @@ namespace Gear.UrlFinder {
 					};
 
 				foreach ( var proto in KnownProtocols ) {
-					var len = proto.Length-3;
-					if ( join-len>=0 && Enumerable.Range(0,len).All(k=>input[join-len+k] == proto[k]) ) {
+					var len = proto.Key.Length-3; // length of the protocol preceeding the :// join.
+
+					if ( join-len>=0 && Enumerable.Range(0,len).All(k=>input[join-len+k] == proto.Key[k]) ) {
 						result.Start = join-len;
+						result.Value = proto.Value ?? proto.Key;
 						break;
 					}
 				}
@@ -92,9 +102,11 @@ namespace Gear.UrlFinder {
 				if ( result.Start==-1 ) {
 					result.Start = join-1;
 					while ( result.Start>=0 && is_probably_a_protocol_character(input[result.Start]) ) --result.Start;
+					result.Value = input.Substring( result.Start, join+3-result.Start );
 				}
 
 				result.End = join+3;
+				Debug.Assert( result.Value.EndsWith( "://" ) );
 				results.Add(result);
 			}
 
@@ -109,6 +121,7 @@ namespace Gear.UrlFinder {
 					if ( input.IndexOf('.',result.Start,result.End-result.Start) == -1 ) { // TODO: also handle invalid urls like '.a.'
 						// throw out invalid domain names which contain no periods
 						result.Start = -1;
+						result.Value = null;
 					} else if ( url_end == -1 ) {
 					} else if ( input[url_end] == ' ' ) {
 					} else { // # or /
@@ -140,7 +153,14 @@ namespace Gear.UrlFinder {
 						}
 					}
 
-					if ( result.Start!=-1 ) while ( result.End>result.Start && ".!?".Contains(input[result.End-1]) ) --result.End; // remove trailing punctuation
+					if ( result.Start!=-1 )
+					{
+						while ( result.End>result.Start && ".!?".Contains(input[result.End-1]) ) --result.End; // remove trailing punctuation
+						if ( result.End > dns_start )
+						{
+							result.Value += input.Substring( dns_start, result.End-dns_start );
+						}
+					}
 				} finally {
 					results[resulti] = result;
 				}
