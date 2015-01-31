@@ -1,0 +1,12 @@
+.projnfo
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.ncb
+Thumbs.db
+obj/
+bin/
+Debug/
+Release/
+TestResults/
