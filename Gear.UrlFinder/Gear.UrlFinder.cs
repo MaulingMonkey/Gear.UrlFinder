@@ -45,9 +45,8 @@ namespace Gear.UrlFinder {
 			};
 
 		static UrlFinder() {
-			foreach( var kv in KnownProtocols )
-				if( kv.Value == null )
-					KnownProtocols[ kv.Key ] = kv.Key;
+			foreach( var protocol in KnownProtocols.Keys.ToArray() )
+				KnownProtocols[ protocol ] = KnownProtocols[ protocol ] ?? protocol;
 
 			Debug.Assert( KnownProtocols.Keys  .All( p => p.EndsWith  ("://") ) );
 			Debug.Assert( KnownProtocols.Values.All( p => p.EndsWith  ("://") ) );
@@ -94,7 +93,7 @@ namespace Gear.UrlFinder {
 
 					if ( join-len>=0 && Enumerable.Range(0,len).All(k=>input[join-len+k] == proto.Key[k]) ) {
 						result.Start = join-len;
-						result.Value = proto.Value ?? proto.Key;
+						result.Value = proto.Value;
 						break;
 					}
 				}
