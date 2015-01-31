@@ -96,5 +96,23 @@ namespace Gear.UrlFinder.Tests {
 			( "<dadibom> if(str.comparesTo(\"b\")){do stuff}"
 			);
 		}
+
+		[TestMethod] public void BldCheck1() { Check
+			( "various text www.google.com etc etc etc"
+			, "http://www.google.com"
+			);
+		}
+
+		[TestMethod] public void BldCheck2() { Check
+			( "various text ftp.google.com etc etc etc"
+			, "ftp://ftp.google.com"
+			);
+		}
+
+		[TestMethod] public void BldCheck3() { Check
+			( "various text irc.afternet.org/gamedev etc etc etc"
+			, "irc://irc.afternet.org/gamedev"
+			);
+		}
 	}
 }
