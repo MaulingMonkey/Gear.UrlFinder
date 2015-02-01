@@ -36,6 +36,12 @@ namespace Gear.UrlFinder {
 			{ ".net"
 			, ".org"
 			, ".com"
+			, ".gov"
+			, ".edu"
+
+			, ".io"
+			, ".tv"
+			, ".uk"
 			};
 
 		static readonly Dictionary<string,string> KnownBLDs = new Dictionary<string,string>()
